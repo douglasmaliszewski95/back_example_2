@@ -1,0 +1,29 @@
+BEGIN TRY
+
+BEGIN TRAN;
+
+-- CreateTable
+CREATE TABLE [dbo].[Cities] (
+    [citieId] INT NOT NULL IDENTITY(1,1),
+    [stateId] INT NOT NULL,
+    [name] NVARCHAR(1000) NOT NULL,
+    [createdAt] DATETIME2 NOT NULL CONSTRAINT [Cities_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
+    [updatedAt] DATETIME2 NOT NULL,
+    CONSTRAINT [Cities_pkey] PRIMARY KEY CLUSTERED ([citieId])
+);
+
+-- AddForeignKey
+ALTER TABLE [dbo].[Cities] ADD CONSTRAINT [Cities_stateId_fkey] FOREIGN KEY ([stateId]) REFERENCES [dbo].[States]([stateId]) ON DELETE NO ACTION ON UPDATE CASCADE;
+
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH

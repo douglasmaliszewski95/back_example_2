@@ -1,0 +1,492 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model Countries {
+  countryId   Int      @id @default(autoincrement())
+  countryCode String
+  name        String
+  keyName     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  States      States[]
+}
+
+model States {
+  stateId      Int       @id @default(autoincrement())
+  countryId    Int
+  name         String
+  stateIsoCode String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  Cities       Cities[]
+  countries    Countries @relation(fields: [countryId], references: [countryId])
+
+  @@index([countryId])
+}
+
+model Cities {
+  citieId   Int         @id @default(autoincrement())
+  stateId   Int
+  name      String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  citiecode Int
+  Addresses Addresses[]
+  states    States      @relation(fields: [stateId], references: [stateId])
+
+  @@index([stateId])
+}
+
+model Users {
+  userId              String          @id @default(uuid())
+  collaboratorId      Int?
+  name                String
+  userGroupName       String?
+  login               String
+  nationalIdCard2     String
+  email               String
+  enabled             Boolean         @default(false)
+  userUpdatedAt       String?
+  userUpdatedAtMillis Int?
+  fieldTeam           Boolean?
+  birthDate           DateTime
+  password            String
+  updatedPassword     String?
+  acceptedTerms       DateTime?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  Addresses           Addresses[]
+  CorporateData       CorporateData?
+  CorporateDataSuperior CorporateData[] @relation("Superior")
+  Logs                Logs[]
+  reimbursement       reimbursement[]
+  userAgencies        userAgencies[]
+  userAreas           userAreas[]
+  userPositions       userPositions[]
+  userProfiles        userProfiles[]
+  incentives          incentives[]
+}
+
+model Addresses {
+  addressesId   String   @id @default(uuid())
+  userId        String
+  citieId       Int
+  neighboarhood String?
+  address       String?
+  number        String?
+  latitude      Decimal?
+  longitude     Decimal?
+  zipCode       String?
+  complement    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  cities        Cities   @relation(fields: [citieId], references: [citieId])
+  users         Users    @relation(fields: [userId], references: [userId])
+
+  @@index([citieId])
+  @@index([userId])
+}
+
+model CorporateData {
+  corporateDataId   String   @id @default(uuid())
+  userId            String   @unique
+  admissionDate     String?
+  regionOperation   String?
+  temporaryEmployee Boolean?
+  registration      String?
+  superior          String
+  resignationDate   DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  users             Users    @relation(fields: [userId], references: [userId])
+  superiorUser      Users    @relation("Superior", fields: [superior], references: [userId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([userId])
+}
+
+model regionOperation {
+  regionOperationId  String               @id @default(uuid())
+  name               String
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  agencies           agencies[]
+  areas              areas[]
+  positions          positions[]
+  Profiles           Profiles[]
+  reimbursementRules reimbursementRules[]
+}
+
+model functionalities {
+  functionalityId        String                   @id @default(uuid())
+  name                   String
+  system                 String
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  ProfileFunctionalities ProfileFunctionalities[]
+}
+
+model Profiles {
+  profileId              String                   @id @default(uuid())
+  regionOperationId      String
+  name                   String
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  excluded               Boolean                  @default(false)
+  system                 String?
+  ProfileFunctionalities ProfileFunctionalities[]
+  regionOperation        regionOperation          @relation(fields: [regionOperationId], references: [regionOperationId])
+  userProfiles           userProfiles[]
+
+  @@index([regionOperationId])
+}
+
+model userProfiles {
+  userProfileId String   @id @default(uuid())
+  userId        String
+  profileId     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  profiles      Profiles @relation(fields: [profileId], references: [profileId])
+  users         Users    @relation(fields: [userId], references: [userId])
+
+  @@index([userId])
+  @@index([profileId])
+}
+
+model agencies {
+  agenciyId         String          @id @default(uuid())
+  regionOperationId String
+  name              String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  regionOperation   regionOperation @relation(fields: [regionOperationId], references: [regionOperationId])
+  userAgencies      userAgencies[]
+
+  @@index([regionOperationId])
+}
+
+model userAgencies {
+  userAgencyId String   @id @default(uuid())
+  userId       String
+  agencyId     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  agencies     agencies @relation(fields: [agencyId], references: [agenciyId])
+  users        Users    @relation(fields: [userId], references: [userId])
+
+  @@index([userId])
+  @@index([agencyId])
+}
+
+model positions {
+  positionId                  String                        @id @default(uuid())
+  regionOperationId           String
+  name                        String
+  createdAt                   DateTime                      @default(now())
+  updatedAt                   DateTime                      @updatedAt
+  excluded                    Boolean                       @default(false)
+  regionOperation             regionOperation               @relation(fields: [regionOperationId], references: [regionOperationId])
+  reimbursementRulesPositions reimbursementRulesPositions[]
+  userPositions               userPositions[]
+
+  @@index([regionOperationId])
+}
+
+model userPositions {
+  userPositionId String    @id @default(uuid())
+  userId         String
+  positionId     String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  positions      positions @relation(fields: [positionId], references: [positionId])
+  users          Users     @relation(fields: [userId], references: [userId])
+
+  @@index([userId])
+  @@index([positionId])
+}
+
+model areas {
+  areaId                  String                    @id @default(uuid())
+  regionOperationId       String
+  name                    String
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  excluded                Boolean                   @default(false)
+  regionOperation         regionOperation           @relation(fields: [regionOperationId], references: [regionOperationId])
+  reimbursementRulesAreas reimbursementRulesAreas[]
+  userAreas               userAreas[]
+
+  @@index([regionOperationId])
+}
+
+model userAreas {
+  userAreaId String   @id @default(uuid())
+  userId     String
+  areaId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  areas      areas    @relation(fields: [areaId], references: [areaId])
+  users      Users    @relation(fields: [userId], references: [userId])
+
+  @@index([userId])
+  @@index([areaId])
+}
+
+model ProfileFunctionalities {
+  profileFunctionalityId String          @id @default(uuid())
+  profileId              String
+  enable                 Boolean
+  preview                Boolean
+  maintenance            Boolean
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  functionalityId        String
+  functionalities        functionalities @relation(fields: [functionalityId], references: [functionalityId])
+  profiles               Profiles        @relation(fields: [profileId], references: [profileId])
+
+  @@index([profileId])
+  @@index([functionalityId])
+}
+
+model language {
+  languageId         String               @id @default(uuid())
+  name               String
+  reimbursementRules reimbursementRules[]
+}
+
+model reimbursementRules {
+  reimbursementRulesId        String                        @id @default(uuid())
+  name                        String
+  valueLimit                  Decimal?
+  beginDate                   DateTime
+  rules                       String
+  regionOperationId           String
+  languageId                  String
+  icon                        String
+  createdAt                   DateTime                      @default(now())
+  updatedAt                   DateTime                      @updatedAt
+  excluded                    Boolean                       @default(false)
+  reimbursement               reimbursement[]
+  language                    language                      @relation(fields: [languageId], references: [languageId])
+  regionOperation             regionOperation               @relation(fields: [regionOperationId], references: [regionOperationId])
+  reimbursementRulesAreas     reimbursementRulesAreas[]
+  reimbursementRulesHistoric  reimbursementRulesHistoric[]
+  reimbursementRulesItens     reimbursementRulesItens[]
+  reimbursementRulesPositions reimbursementRulesPositions[]
+
+  @@index([languageId])
+  @@index([regionOperationId])
+}
+
+model reimbursementRulesItens {
+  reimbursementRulesItensId String             @id @default(uuid())
+  reimbursementRulesId      String
+  name                      String
+  value                     Decimal?
+  createdAt                 DateTime           @default(now())
+  updatedAt                 DateTime           @updatedAt
+  reimbursementRules        reimbursementRules @relation(fields: [reimbursementRulesId], references: [reimbursementRulesId])
+
+  @@index([reimbursementRulesId])
+}
+
+model reimbursementRulesHistoric {
+  reimbursementRulesHistoricId String             @id @default(uuid())
+  reimbursementRulesId         String
+  name                         String
+  newValue                     String
+  createdAt                    DateTime           @default(now())
+  updatedAt                    DateTime           @updatedAt
+  reimbursementRules           reimbursementRules @relation(fields: [reimbursementRulesId], references: [reimbursementRulesId])
+
+  @@index([reimbursementRulesId])
+}
+
+model reimbursementRulesPositions {
+  reimbursementRulesPositionsId String             @id @default(uuid())
+  reimbursementRulesId          String
+  positionId                    String
+  createdAt                     DateTime           @default(now())
+  updatedAt                     DateTime           @updatedAt
+  positions                     positions          @relation(fields: [positionId], references: [positionId], onUpdate: NoAction)
+  reimbursementRules            reimbursementRules @relation(fields: [reimbursementRulesId], references: [reimbursementRulesId], onUpdate: NoAction)
+
+  @@index([reimbursementRulesId])
+  @@index([positionId])
+}
+
+model reimbursementRulesAreas {
+  reimbursementRulesAreasId String             @id @default(uuid())
+  reimbursementRulesId      String
+  areaId                    String
+  createdAt                 DateTime           @default(now())
+  updatedAt                 DateTime           @updatedAt
+  areas                     areas              @relation(fields: [areaId], references: [areaId])
+  reimbursementRules        reimbursementRules @relation(fields: [reimbursementRulesId], references: [reimbursementRulesId], onUpdate: NoAction)
+
+  @@index([reimbursementRulesId])
+  @@index([areaId])
+}
+
+model reimbursement {
+  reimbursementId          String                     @id @default(uuid())
+  userId                   String
+  reimbursementRulesId     String
+  dateRequest              DateTime
+  note                     String?
+  dateExpense              DateTime
+  valueInvoice             Decimal
+  valueReimbursement       Decimal
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  status                   String
+  reimbursementRules       reimbursementRules         @relation(fields: [reimbursementRulesId], references: [reimbursementRulesId])
+  users                    Users                      @relation(fields: [userId], references: [userId])
+  reimbursementEvidence    reimbursementEvidence[]
+  reimbursementsOCRLog     reimbursementsOCRLog[]
+  reimbursementStatus      reimbursementStatus[]
+  reimbursementsValidation reimbursementsValidation[]
+
+  @@index([userId])
+  @@index([reimbursementRulesId])
+}
+
+model reimbursementEvidence {
+  reimbursementEvidenceId String        @id @default(uuid())
+  type                    Int
+  reimbursementId         String
+  document                String
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  reimbursement           reimbursement @relation(fields: [reimbursementId], references: [reimbursementId])
+
+  @@index([reimbursementId])
+}
+
+model reimbursementStatus {
+  reimbursementStatusId String        @id @default(uuid())
+  reimbursementId       String
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  commentary            String?
+  status                String
+  reimbursement         reimbursement @relation(fields: [reimbursementId], references: [reimbursementId])
+
+  @@index([reimbursementId])
+}
+
+model reimbursementsOCRLog {
+  reimbursementOCRLogId String        @id @default(uuid())
+  reimbursementId       String
+  OCRDate               DateTime?
+  OCRValue              Decimal?
+  OCRItens              String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  reimbursement         reimbursement @relation(fields: [reimbursementId], references: [reimbursementId])
+
+  @@index([reimbursementId])
+}
+
+model validations {
+  validationsId            String                     @id @default(uuid())
+  name                     String
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  reimbursementsValidation reimbursementsValidation[]
+}
+
+model reimbursementsValidation {
+  reimbursementsValidationId String        @id @default(uuid())
+  reimbursementId            String
+  validationsId              String
+  createdAt                  DateTime      @default(now())
+  updatedAt                  DateTime      @updatedAt
+  reimbursement              reimbursement @relation(fields: [reimbursementId], references: [reimbursementId])
+  validations                validations   @relation(fields: [validationsId], references: [validationsId])
+
+  @@index([reimbursementId])
+  @@index([validationsId])
+}
+
+model Logs {
+  logId          String        @id @default(uuid())
+  systemActionId String
+  userId         String
+  date           DateTime      @default(now())
+  message        String
+  systemActions  SystemActions @relation(fields: [systemActionId], references: [systemActionId])
+  users          Users         @relation(fields: [userId], references: [userId])
+
+  @@index([userId])
+  @@index([systemActionId])
+}
+
+model SystemActions {
+  systemActionId String   @id @default(uuid())
+  name           String
+  excluded       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  Logs           Logs[]
+}
+
+model incentivesFiles {
+  incentivesFileId String   @id @default(uuid())
+  fileName         String
+  importedAt       DateTime
+  user             String
+  status           String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  incentivesLog incentivesLog[]
+  incentives    incentives[]
+}
+
+model incentivesLog {
+  incentivesLogId  String   @id @default(uuid())
+  date             DateTime
+  message          String
+  incentivesFileId String
+
+  incentivesFiles incentivesFiles @relation(fields: [incentivesFileId], references: [incentivesFileId])
+
+  @@index([incentivesFileId])
+}
+
+model incentives {
+  incentiveId       String   @id @default(uuid())
+  name              String
+  collabId          Int
+  appliedPosition   String
+  area              String
+  areaCoordinator   String
+  areaLeader        String
+  areaSupervisor    String
+  period            String
+  startDate         DateTime
+  endDate           DateTime
+  premiumTarget     Int
+  premiumAchieved   Int
+  ttlTarget         String
+  ttlTargetAchieved String
+  unit              String
+  percentageGoal    Decimal
+  premiumSKU        String
+  description       String
+  incentivesFileId  String
+  userId            String
+
+  incentivesFiles incentivesFiles @relation(fields: [incentivesFileId], references: [incentivesFileId])
+  users           Users           @relation(fields: [userId], references: [userId])
+
+  @@index([incentivesFileId])
+  @@index([userId])
+}
